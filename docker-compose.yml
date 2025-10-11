@@ -1,0 +1,133 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: epispy-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - epispy-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  perception:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.perception
+    container_name: epispy-perception
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./src:/app/src
+      - ./data:/app/data
+    env_file:
+      - .env
+    networks:
+      - epispy-network
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  cognition:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.cognition
+    container_name: epispy-cognition
+    ports:
+      - "8002:8002"
+    volumes:
+      - ./src:/app/src
+      - ./models:/models
+    env_file:
+      - .env
+    networks:
+      - epispy-network
+    depends_on:
+      - redis
+      - perception
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: epispy-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_models:/root/.ollama
+    networks:
+      - epispy-network
+
+  reasoning:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.reasoning
+    container_name: epispy-reasoning
+    ports:
+      - "8003:8003"
+    volumes:
+      - ./src:/app/src
+      - ./prompts:/app/prompts
+    env_file:
+      - .env
+    networks:
+      - epispy-network
+    depends_on:
+      - ollama
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    container_name: epispy-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./src:/app/src
+    env_file:
+      - .env
+    networks:
+      - epispy-network
+    depends_on:
+      - redis
+      - perception
+      - cognition
+      - reasoning
+
+
+  orchestrator:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.orchestrator
+    container_name: epispy-orchestrator
+    ports:
+      - "8004:8004"
+    volumes:
+      - ./src:/app/src
+    env_file:
+      - .env
+    networks:
+      - epispy-network
+    depends_on:
+      - redis
+      - perception
+      - cognition
+      - reasoning
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3 
+      
+
+networks:
+  epispy-network:
+    driver: bridge
+
+volumes:
+  redis_data:
+  ollama_models:
