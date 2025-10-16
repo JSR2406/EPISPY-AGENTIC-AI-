@@ -1,7 +1,10 @@
+# Python bytecode and artifacts
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
+
+# Distribution / packaging
 .Python
 build/
 develop-eggs/
@@ -18,18 +21,23 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+
+# Virtual Environments
 .env
 .venv
 env/
 venv/
 ENV/
+
+# Data and Logs (keeping folders with .gitkeep)
 data/raw/*
 data/processed/*
 !data/raw/.gitkeep
-!data/processed/.gitkeep
-models/*.json
-models/*.pkl
+!data-processed/.gitkeep
 logs/*.log
+models/*.json
+
+# OS and IDE specific files
 .DS_Store
 .vscode/
 .idea/
