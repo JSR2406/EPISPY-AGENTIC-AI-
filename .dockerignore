@@ -1,0 +1,17 @@
+﻿__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info
+dist
+build
+.env
+.git
+.gitignore
+README.md
+*.md
+.vscode
+.idea
