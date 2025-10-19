@@ -1,0 +1,45 @@
+from fastapi import FastAPI
+from pydantic import BaseModel
+import joblib
+import os
+import numpy as np
+
+# --- 1. Define the Application ---
+app = FastAPI(
+    title="EpiSPY Prediction API",
+    description="An API to predict outcomes using the EpiSPY model.",
+    version="1.0"
+)
+
+# --- 2. Load the Machine Learning Model ---
+model = None
+MODEL_PATH = "models/epispy_model.pkl"
+
+@app.on_event("startup")
+def load_model():
+    """
+    Load the model during startup.
+    Handles the case where the model file might be missing.
+    """
+    global model
+    if os.path.exists(MODEL_PATH):
+        try:
+            model = joblib.load(MODEL_PATH)
+            print("INFO:     Model loaded successfully from models/epispy_model.pkl")
+        except Exception as e:
+            model = None
+            print(f"ERROR:    Could not load model. Error: {e}")
+    else:
+        model = None
+        print(f"WARNING:  Model file not found at {MODEL_PATH}. API will not be able to make predictions.")
+
+# --- 3. Define the Input Data Model ---
+# IMPORTANT: Replace these feature names with the actual features your model expects.
+class PredictionRequest(BaseModel):
+    feature1: float
+    feature2: float
+    feature3: float
+    feature4: float
+    # Add more features here as required by your model...
+
+# --- 4. Define API
